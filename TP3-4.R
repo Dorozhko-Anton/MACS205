@@ -16,7 +16,7 @@ trapezeInt =function(FUN,a,b,M){
   return(q)
 }
 
-find_ordre = function(FUN, tolerance=1e-7) {
+find_order = function(FUN, tolerance=1e-7) {
   p = 0
   while (TRUE) {
     f = function (x) x**p
@@ -31,7 +31,7 @@ find_ordre = function(FUN, tolerance=1e-7) {
   return (p-1)
 }
 
-find_ordre(trapezeInt)
+find_order(trapezeInt)
 
 
 ##################################
@@ -59,7 +59,7 @@ refineTrapeze=function(FUN,a,b,M,q){
 
 ### TEST
 p4 = function(x){x^4}
-M = 5
+M =4
 myfun = p4 
 Qh = trapezeInt(myfun, 0, 1, M)
 refineQh = refineTrapeze(myfun,0,1,M, Qh)
@@ -86,10 +86,32 @@ simpsonInt = function(FUN,a,b,M){
 }
 
 ## TODO: coder le code pour tester la fonction dont on connait l'integral
+test = function(FUN, a, b, realInt) {
+
+  MM = 5:20
+  Resultats = rep(0,length(MM));
+  for (i in  1:length(MM)){
+    Resultats[i]  = (b-a)*simpsonInt(FUN, a, b,MM[i]);
+  }
+  plot(MM,trueInt-Resultats);
+  title("error as a function of M")
+} 
 
 ## TEST
 d = 4
-a = 1; b=5;
+a = 1; b = 5;
+
+MyPolynome = function(x){x^d}
+trueInt = (b^(d+1) - a^(d+1))/(d+1);
+
+test(MyPolynome, a, b, trueInt)
+
+
+
+## TEST
+d = 4
+a = 1; b = 5;
+# a = pi/2; b=2*pi + pi/2
 
 MyPolynome = function(x){x^d}
 trueInt = (b^(d+1) - a^(d+1))/(d+1);
@@ -98,7 +120,7 @@ MM = 5:20
 Resultats = rep(0,length(MM));
 for (i in  1:length(MM)){
   Resultats[i]  = simpsonInt(MyPolynome,a,b,MM[i]);
-  ##pi/2,2*pi+pi/2,MM(i));
+  # Resultats[i]  = simpsonInt(MyPolynome,pi/2,2*pi+pi/2,MM(i));
 }
 
 plot(MM,trueInt-Resultats);
@@ -160,7 +182,7 @@ richardson = function(FUN,n,t,delta){
   x = exp(lx) 
   A = sapply(x,FUN) 
   for( j in 2:(n+1)){
-    A[j : (n+1) ] =  (A[j:(n+1)] - delta^(j:(n+1))* A[(j-1):n])/ (1 - delta^(j:(n+1)))
+    A[j : (n+1) ] =  (A[j:(n+1)] - delta^(j-1)* A[(j-1):n])/ (1 - delta^(j-1))
   }
   return(A)
 }
@@ -207,7 +229,7 @@ romberg =function(FUN,n,a,b,M){## methode de Romberg avec n etapes
   }
   delta = 1/4;
   for (j in 2:(n+1)){
-    A[j : (n+1) ] = (A[j:(n+1)] - delta^(j:(n+1))* A[(j-1):n])/ (1 - delta^(j:(n+1)))
+    A[j : (n+1) ] = (A[j:(n+1)] - delta^(j-1)* A[(j-1):n])/ (1 - delta^(j-1))
   }
   return(A)
 }
