@@ -1,0 +1,619 @@
+---
+title: |
+       |  MACS 205 : interpolation et quadrature 
+       |  Étude de Cas
+output: 
+  pdf_document:
+    number_sections: true
+author: DOROZHKO Anton
+date: \'`r format(Sys.Date(), "%d/%m/%Y")`\'
+header-includes:
+  - \usepackage{TDheader}
+  - \usepackage[colorinlistoftodos]{todonotes}
+  - \usepackage{enumitem}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\listoftodos
+
+\section{Introduction}
+
+L’étude de cas consiste à utiliser les résultats théoriques et les méthodes numériques
+vus en cours pour
+\begin{enumerate}
+\item l’estimation d’une densité de probabilité, étant donné un histogramme formé à partir
+d’un échantillon de variables indépendantes et identiquement distribuées selon cette
+densité,
+\item l’estimation de la probabilité pour la variable aléatoire associée d’appartenir à un
+certain intervalle, étant donnée sa densité de probabilité.
+\end{enumerate}
+
+On s’intéressera en particulier à la loi Beta de paramètres $\alpha > 0$, $\beta > 0$, de densité
+\begin{equation}
+\phi_{\alpha, \beta}(x) = x^{\alpha-1}(1-x)^{\beta-1}/B_{\alpha, \beta}
+\end{equation}
+où $B_{\alpha, \beta}$ est la constante de normalisation
+\begin{equation}
+B_{\alpha, \beta} = \int_0^1 t^{\alpha-1}(1-t)^{\beta-1}dt = \frac{\Gamma(\alpha)\Gamma(\beta)}{\Gamma(\alpha +\beta)}
+\end{equation}
+
+Dans toute la suite, on prendra
+\begin{center}
+$\alpha = 1.7, \beta=5.1$
+\end{center}
+
+La première partie du sujet vous amènera à utiliser les méthodes d’interpolation vues
+en cours sur la densité $\phi_{1.7,5.1}$ , ainsi que sur sa “version bruitée”, c’est-à-dire l’histogramme
+d’un échantillon i.i.d $(X_i , i = 1, ... , n)$ suivant la loi Beta de paramètre $(1.7, 5.1)$. La
+deuxième partie consiste à exploiter les méthodes d’intégration numériques pour approcher
+la quantité
+\begin{equation}\label{eq:proba}
+p_{0.1} = \mathbb{P}(0.1 \leq X_1 \leq 0.9) = \int_{0.1}^{0.9} \phi_{1.7,5.1}(t) dt
+\end{equation}
+
+
+\section*{Consignes}
+L’ensemble de votre travail devra être rassemblé dans un seul dossier portant votre
+nom, et archivé au format .zip ou tar.gz. Ce dossier doit contenir
+\begin{itemize}
+\item Un Notebook R au format pdf ou html, contenant contenant les réponses rédigées
+au questions, les figures et résultats numériques obtenus.
+\item La source du notebook (au format \textbf{.R} ou \textbf{.Rmd}, exécutable par le correcteur depuis
+le répertoire de travail sans modification.
+\textit{Attention aux chemins d’accès ! ceux-ci doivent être relatifs au répertoire courant}
+\item Toutes les fonctions utilisées dans le notebook (y compris les fonctions codées en cours) rassemblées dans un fichier \textbf{functions\_ETC2018.R}
+\item L’histogramme des échantillons générés, sauvegardé dans un fichier \textbf{hist1.rda}.
+\end{itemize}
+
+Le non respect des consignes ci-dessus sera pénalisé d’un malus variant de 1 à 5 points en
+fonction du temps perdu par le correcteur pour débugger.
+
+Les dossiers doivent être déposés sur l’espace de partage sur Eole avant le dimanche 4
+mars 2016, 23h59. Chaque heure de retard vous coûtera deux points (sur vingt).
+
+En cas de problème d’ordre technique, vous pouvez envoyer un mail à l’adresse :
+anne.sabourin@telecom-paristech.fr, avec en objet l’intitulé “EDC MACS205”.
+
+
+\section{Génération des données et fonctions préliminaires}
+
+\begin{enumerate}
+\item Implémentez une fonction densite qui à partir d’un vecteur contenant $n \geq 1$ réels
+$(x_1 , ... , x_n)$, appartenant à $[0, 1]$, retourne le vecteur $(\phi_{1.7,5.1}(x_1), ... , \phi_{1.7,5.1}(x_n ))$.
+On utilisera pour cela l’expression (1) et la fonction \textbf{dbeta} de \textbf{R}.
+\end{enumerate}
+
+```{r}
+# TODO: to functions_ETC2018.R
+densite = function (x) {
+ phi = dbeta(x, shape1 = 1.7, shape2 = 5.1)
+ return (phi)
+}
+
+f = densite(seq(0,1,0.001))
+plot(f)
+```
+
+On considérera aussi une version approchée de $\phi_{1.7,5.1}$ , basée sur un histogramme construit à partir de $N_w$ échantillons i.i.d $w_i$ de loi $Beta(1.7, 5.1)$. On définit pour tout $x \in [0, 1[$,
+\begin{center}
+$\hat{\phi}^{N_w}_{1.7,5.1} = (2^8/N_w) \sum_{i=1}^{N_w} \mathbf{1}_{w_i \in [k(x)2^{-8}, (k(x)+1)2^{-8} [}$
+\end{center}
+où $k(x)$ est la partie entière de $2^8 x$.
+
+\begin{enumerate}[resume]
+\item Soit $x \in [0, 1[$. Quelle est la limite presque sûr de $\hat{\phi}_{1.7,5.1}^{N_w}(x)$ lorsque $N_w$ tend vers
+l’infini ? On notera $\hat{\phi}_{1.7,5.1}^{\infty}(x)$ cette limite.
+\end{enumerate}
+
+\textbf{Reponse} 
+
+$\hat{\phi}_{1.7,5.1}^{\infty}(x) = \lim_{N_w \rightarrow \infty} (2^8/N_w) \sum_{i=1}^{N_w} \mathbf{1}_{w_i \in [k(x)2^{-8}, (k(x)+1)2^{-8} [} = 2^8 \int_{k(x)2^{-8}}^{(k(x)+1)2^{-8}} \phi_{1.7,5.1}(t)dt$
+
+
+\begin{enumerate}[resume]
+\item Donner une majoration de $\hat{\phi}_{1.7,5.1}^{\infty}(x) - \phi_{1.7,5.1}(x)$ en fonction de $x \in [0, 1[$.
+\end{enumerate}
+
+\textbf{Reponse}
+
+$\hat{\phi}_{1.7,5.1}^{\infty}(x) - \phi_{1.7,5.1}(x) = max(\phi_{1.7,5.1}(k(x)2^{-8}), \phi_{1.7,5.1}((k(x)+1)2^{-8})) - \phi_{1.7,5.1}(x)$
+
+
+
+Pour générer l’histogramme et l’estimateur associé, il vous est fourni un script \textbf{ini.R},
+et deux fonctions \textbf{hist\_value}, \textbf{generation\_X} placées dans un fichier \textbf{ini\_functions.R}.
+Récupérer ces fichiers (répertoire \textbf{script\_et\_fonctions.tar.gz} sur le site pédagogique)
+et placez-les dans votre répertoire de travail. Exécutez le script \textbf{ini.R} pour générer $10^7$
+échantillons i.i.d. selon un loi $Beta(1.7, 5.1)$ et l’histogramme associé. L’histogramme doit
+s’afficher, et un fichier \textbf{hist1.rda} sera créé dans votre répertoire de travail. \textbf{n’oubliez
+pas de joindre ce dernier à votre rendu !}
+
+\begin{enumerate}[resume]
+\item On sera amené dans la suite à utiliser les fonctions implémentées en cours, en leur passant en argument la fonction \textbf{FUN = hist\_value}. Que fait la fonction \textbf{hist\_value} ?
+\end{enumerate}
+
+\textbf{Reponse}
+Elle retourne la valeur de l'histogramme associé au x
+
+\section{Interpolation polynomiale}
+
+\subsection{Interpolation à partir de l’expression exacte de $\phi_{1.7,5.1}(x)$}
+
+\begin{enumerate}
+\item Construisez le polynôme d’interpolation de Lagrange de la fonction $\phi_{1.7,5.1}(x)$ avec des noeuds d’interpolation équi-distants, évalué en $1000$ points de l'intervalle $[a = 2^{-8}, b=2^{-8}]$. Faites varier le degré du polynôme d’interpolation entre 2 et 50.
+ \begin{enumerate}[label=(\alph*)]
+    \item A partir de quel degré voyez- vous apparaître le phénomène de Runge ?
+    \item Affichez trois exemples mettant en évidence les défauts de l’interpolation avec
+un degré trop bas ou trop haut. Vous tracerez sur chaque graphique le résultat
+de l’interpolation et le graphe de la fonction de référence.
+  \end{enumerate}
+\end{enumerate}
+
+\textbf{Réponse}
+
+a) Le phénomène de Runge commence à apparaître a partir de degré 60
+
+```{r, echo=FALSE}
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+d = 62
+neval = 1000
+
+res = interpolLagrange(n=d, a, b, neval=neval,nodes='equi', FUN=densite, Plot=TRUE)
+```
+
+b) 
+
+```{r, echo=FALSE}
+
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+neval = 1000
+
+res = interpolLagrange(n=3, a, b, neval=neval,nodes='equi', FUN=densite, Plot=TRUE)
+
+res = interpolLagrange(n=30, a, b, neval=neval,nodes='equi', FUN=densite, Plot=TRUE)
+
+res = interpolLagrange(n=61, a, b, neval=neval,nodes='equi', FUN=densite, Plot=TRUE)
+
+```
+
+
+\begin{enumerate}[resume]
+\item Reprenez les étapes de la question 1, en utilisant cette fois les noeuds de Tchebychev.
+commentez.
+\end{enumerate}
+
+\textbf{Reponse}
+
+a) Le phénomène de Runge commence à apparaître a partir de degré 60
+
+```{r, echo=FALSE}
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+d = 61
+neval = 1000
+
+res = interpolLagrange(n=d, a, b, neval=neval,nodes='cheby', FUN=densite, Plot=TRUE)
+```
+
+b) 
+
+```{r, echo=FALSE}
+
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+neval = 1000
+
+res = interpolLagrange(n=3, a, b, neval=neval,nodes='cheby', FUN=densite, Plot=TRUE)
+
+res = interpolLagrange(n=30, a, b, neval=neval,nodes='cheby', FUN=densite, Plot=TRUE)
+
+res = interpolLagrange(n=61, a, b, neval=neval,nodes='cheby', FUN=densite, Plot=TRUE)
+
+```
+
+
+\begin{enumerate}[resume]
+\item On considère maintenant une interpolation par morceaux, de degré $n = 1, 2$ ou
+$n = 3$, avec noeuds équi-distants sur chaque sous-intervalle, de pas $h = (b - a)/M$ .
+Commencez par modifier la fonction hornerNewton codée en cours pour assurer son
+bon fonctionnement pour un nombre de noeuds d’interpolation inférieur à $2$.  \\
+Affichez le résultat de l’interpolation en même temps que la fonction de référence,
+pour $M = 20$ et $n = 1, 2, 3$.
+\end{enumerate}
+
+```{r}
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+neval = 1000
+
+M = 20
+ns = c(1, 2, 3)
+
+for (n in c(1, 2, 3)) {
+  piecewiseInterpol(n=n,nInt=M,a=a,b=b,neval=1000, nodes = "equi", FUN=densite, Plot=TRUE)
+}
+```
+
+
+\begin{enumerate}[resume]
+\item On veut comparer l’évolution de l’erreur pour l’interpolation par morceau de degré
+$n = 3$ et $M$ sous-intervalles comme ci-dessus avec l’erreur de l’interpolation de Lagrange ’simple’ de degré $n' = 3*M + 1$, avec des noeuds d’interpolation equirépartis
+\begin{enumerate}[label=(\alph*)]
+\item Expliquez le choix de n 0 pour effectuer cette comparaison.
+\end{enumerate}
+On approche la norme infinie de l’erreur par le maximum des valeurs absolues des
+erreurs évaluées sur la grille d’interpolation (définie par le parametre \textbf{neval}). Pour
+chaque valeur de $M$ on prendra \textbf{neval = floor( (2\^{}10 -1)/M) +1} comme argument de la fonction \textbf{piecewiseInterpol} et \textbf{neval = 2\^{}10} comme argument de la
+fonction \textbf{interpolLagrange}.
+\begin{enumerate}[resume]
+\item justifiez le choix de \textbf{neval} dans les deux cas.
+\item Faites varier $M$ de 1 à 20, et pour chaque valeur de $M$ , calculez une approximation de la norme infinie de l’erreur comme expliqué ci-dessus. Tracez sur le même graphique l’évolution de cette approximation en fonction de $M$ , pour les deux méthodes considérées. Commentez.
+\end{enumerate}
+\end{enumerate}
+
+\textbf{Réponse}
+
+a) On a choisi le $n'$ pour avoir presque la même quantité des noeuds. 
+
+b) On a choisi neval pour que le nombre des noeuds de l'évaluation sera distribué de la même façon
+
+c) Pour petites valeurs de M l'interpolation de Lagrange 'simple' donne mieux résultats, mais assez vite en augmentent M on va découvrir qu'erreur va exploser à cause du phénomène de Runge.
+```{r}
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+
+errors = c()
+errors_piecewise = c()
+ 
+for (M in seq(1, 20, 1)) {
+  n = 3
+  neval = floor( (2^10-1)/M) + 1
+  
+  res_piecewise = piecewiseInterpol(n=n,nInt=M,a=a,b=b,
+                                    neval=neval, nodes = "equi", 
+                                    FUN=densite, Plot=FALSE)
+  errors_piecewise = c(errors_piecewise, max(abs(res_piecewise[1,] - densite(res_piecewise[2,] ))))
+  
+  n_simple = 3*M + 1  
+  neval_simple = 2^10
+  
+  grid = seq(a, b, length.out=neval_simple)
+  
+  res = interpolLagrange(n=n_simple, a, b, 
+                         neval=neval_simple,nodes='equi', 
+                         FUN=densite, Plot=FALSE)
+  errors = c(errors, max(abs(res - densite(grid))))
+}
+
+plot(errors, type='l')
+lines(errors_piecewise, col='red')
+legend("topright", legend=c("error of polynom interpolation", 
+                            "error of piecewise interpolation"),
+       col=c('black', 'red'), lty=1:2, cex=0.8, bg="gray")
+
+```
+
+\subsection{Interpolation à partir de l’histogramme}
+
+\begin{enumerate}[resume]
+\item Reprendre les questions 1-2-3 en utilisant l’histogramme généré à la partie 2 (en
+pratique, vous utiliserez la fonction \textbf{hist\_value}). Que remarquez-vous à propos des
+deux premières méthodes (questions 1 et 2) ?
+Quelle méthode d’interpolation vous parait la plus judicieuse ?
+\end{enumerate}
+
+\textbf{Réponse}
+
+3.1.1
+a) Le phénomène de Runge commence à apparaître a partir de degré 45
+
+```{r, echo=FALSE}
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+d = 45
+neval = 1000
+
+res = interpolLagrange(n=d, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
+```
+b) 
+
+```{r, echo=FALSE}
+
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+neval = 1000
+
+res = interpolLagrange(n=3, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
+
+res = interpolLagrange(n=20, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
+
+res = interpolLagrange(n=45, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
+
+```
+3.1.2
+
+a) Le phénomène de Runge commence à apparaître a partir de degré 45
+
+```{r, echo=FALSE}
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+d = 45
+neval = 1000
+
+res = interpolLagrange(n=d, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
+```
+
+b) 
+
+```{r, echo=FALSE}
+
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+neval = 1000
+
+res = interpolLagrange(n=3, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
+
+res = interpolLagrange(n=30, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
+
+res = interpolLagrange(n=45, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
+
+```
+3.1.3
+```{r}
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+neval = 1000
+
+M = 20
+
+for (n in c(1, 2, 3)) {
+  piecewiseInterpol(n=n,nInt=M,a=a,b=b,neval=1000, nodes = "equi", FUN=f_hist_value, Plot=TRUE)
+}
+```
+
+Dans question 1 et 2 on peut remarquer que le nombre des noeuds à partir lequel on a le phénomène de Runge est moins que pour la fonction \textbf{densite}.
+
+La méthode d'interpolation par morceaux me parait la plus judicieuse, parce qu'il n'y a pas de phénomène de Runge avec le nombre des noeuds plus grands que dans les méthodes précédentes.
+
+
+\section{Méthodes de quadrature}
+
+\subsection{Estimation de $p_{0.1}$ à partir de la densité $\phi_{1.7,5.1}$}
+
+On se place dorénavant dans le cas où la densité est connue, mais où son intégrale ne
+l’est pas.
+
+Pour estimer la valeur de $p_{0.1}$ définie par l’équation \eqref{eq:proba}, on utilise la méthode de quadrature composite de Cavalieri-Simpson, où la fonction à intégrer est la densité $\phi_{1.7,5.1}$, connue, les bornes d’intégration sont $a = 0.1, b = 0.9$. On appelle $\hat{I}^{simp}_M$ le résultat obtenu par une méthode de simpson composite avec $M$ intervalles de même taille.
+
+\begin{enumerate}
+\item Affichez le graphe de $\hat{I}^{simp}_M$ en fonction de $M$ , pour $M$ variant sur une plage appropriée. En déduire une première estimation de $p_0.1$. Au vu des résultats numériques, donnez un ordre de grandeur la précision de votre estimation.
+\end{enumerate}
+
+\textbf{Réponse}
+
+```{r}
+source('functions_ETC2018.R')
+a = 0.1
+b = 0.9
+
+integrals = c()
+
+range = seq(10, 100, 10)
+
+for (M in range) {
+  I = simpsonInt(FUN=densite, a=a, b=b, M=M)
+  integrals = c(integrals, I)
+}
+
+plot(range, integrals, type='l')
+```
+
+Première estimation de $p_{0.1} = 0.8232578$
+
+\todo{donnez un ordre de grandeur la précision de votre estimation.}
+
+
+\begin{enumerate}[resume]
+\item On s’intéresse à l’erreur commise en fonction du nombre $M$ de sous intervalles d’intégration.
+\begin{enumerate}[label=(\alph*)]
+\item Quel est l'ordre de grandeur théorique de l'erreur en fonction de $h = \frac{b-a}{M}$?
+\item \label{2b}La fonction \textbf{pbeta} de \textbf{R} donne une très bonne approximation de la fonction
+de répartition de la loi Beta. Calculez une valeur 'de référence' $p_{0.1,table}$ en utilisant la fonction \textbf{pbeta}. Tracez le graphe du logarithme de la valeur absolue de l’erreur, $log \| p_{0.1,table} - I^{simp}_M \|$ en fonction de $log(M)$. Que pouvez-vous en
+déduire et cela est-il en accord avec le cours ?
+\item Évaluez a posteriori la valeur absolue de l’erreur, (sans utiliser la fonction
+\textbf{pbeta}) pour $M$ variant entre 14 et 80.
+  \begin{enumerate}[label=\roman*]
+  \item Tracez le graphe “log-log” de l’erreur absolue contre le nombre de pas $M$ .
+  \item Estimez la pente dans une portion linéaire
+  \item Comparez vos résultats à ceux de la question \ref{2b}
+  \end{enumerate}
+\end{enumerate}
+\end{enumerate}
+
+\textbf{Réponse}
+
+a) L'ordre de grandeur théorique de l'erreur en fonction de h: $\mathcal{O}(h^4)$
+
+b) 
+```{r}
+p_table = pbeta(0.9, 1.7, 5.1) - pbeta(0.1, 1.7, 5.1) 
+
+integral_errors = abs(integrals - p_table)
+
+logerr = log(integral_errors)
+
+plot(log(range), logerr, type='l')
+
+N = length(logerr)
+pente = (logerr[N] - logerr[1])/(log(range[N]) - log(range[1]))
+sprintf("Pente de courbe est: %f", pente)
+```
+
+c) 
+```{r}
+source('functions_ETC2018.R')
+
+range=seq(14,80,1)
+
+integral_errs_aposteriori = c()
+
+for (M in range) {
+  res = evalErrSimpson(FUN=densite, a=0.1, b=0.9, M)
+  integral_errs_aposteriori = c(integral_errs_aposteriori, res[1])
+}
+
+logerr_aposteriori =  log(abs(integral_errs_aposteriori))
+
+plot(log(range),logerr_aposteriori, type='l')
+
+
+N = length(logerr_aposteriori)
+pente = (logerr_aposteriori[N] - logerr_aposteriori[1])/(log(range[N]) - log(range[1]))
+sprintf("Pente de courbe est: %f", pente)
+```
+
+Le pente des courbes sont pres de $-4$, parce que on a utilisé le méthode d'ordre 3.
+
+\begin{enumerate}[resume]
+\item On voudrait une méthode automatique pour choisir $M$ en fonction de l’estimation de l’erreur a posteriori, pour avoir une estimation $\hat{I}$ à $10^{-6}$ près de $p_{0.1}$ .
+Écrire un algorithme utilisant la fonction evalErrSimpson.
+\end{enumerate}
+
+```{r}
+source('functions_ETC2018.R')
+
+res = chooseM(FUN=densite, a=0.1, b=0.9, tolerance=10^(-8))
+
+sprintf("Estimation a 10^(-8) pres : %f", res[2, length(res[2,]) - 1])
+```
+
+
+Donnez maintenant une estimation de $p_{0.1}$ à $10^{-8}$ près.
+
+$p_{0.1} = 0.823258$
+
+
+\subsection{Estimation de $p_{0.1}$ à partir $\hat{\phi}_{1.7,5.1}$}
+
+On se demande dans cette partie comment les erreurs en entrée (sur les données, i.e. sur l’intégrande $\phi_{1.7,5.1}$ ) impactent la sortie (la valeure de l’intégrale approchée)
+
+\begin{enumerate}
+\item Ecrire une fonction \textbf{densite\_bruitee} prenant en argument un vecteur $x$ (dont les éléments sont dans l’intervalle $[0, 1]$) et renvoyant un vecteur $y$ de même taille dont chaque élément est la valeur de l’histogramme $\hat{\phi}_{1.7,5.1}$ évalué en l’élément de $x$ associé. On utilisera la fonction \textbf{hist\_value} fournie.
+\end{enumerate}
+
+On considère
+\begin{itemize}
+\item l’approximation  $\hat{p}^{bruit}_{0.1,M}$ de $p_{0.1}$ obtenue par la la méthode de composite de Simpson
+appliquée à \textbf{densite\_bruitee}, avec $M$ sous-intervalles.
+\item l'approximation  $\hat{p}_{0.1,M}$ obtenue par la même méthode, appliquée à la vraie densité \textbf{densite}.
+\end{itemize}
+
+On s’intéresse à la différence absolue
+\begin{center}
+$\Delta_M = | \hat{p}^{bruit}_{0.1,M} - \hat{p}_{0.1,M} |.$
+\end{center}
+
+\begin{enumerate}[resume]
+\item Que vous dit la théorie sur l’allure de la courbe de $\Delta_M$ en fonction de $M$?
+\end{enumerate}
+
+\textbf{Réponse}
+
+L'erreur va diminuer au certain niveau et après à cause de bruit l'approximation va osciller.
+
+\begin{enumerate}[resume]
+\item Affichez cette courbe et commentez le résultat vis-à-vis de la question précédente.
+\end{enumerate}
+
+```{r}
+source('functions_ETC2018.R')
+
+Mrange = seq(10, 100, 10)
+
+delta = c()
+
+for (M in Mrange) {
+  res = simpsonInt(FUN=densite, a=0.1, b=0.9, M)
+  res_bruitee = simpsonInt(FUN=densite_bruitee, a=0.1, b=0.9, M)
+  
+  delta = c(delta, abs(res_bruitee - res))
+}
+
+plot(Mrange, delta, type='l')
+```
+
+\section{Extrapolation de Richardson et méthode de Romberg}
+
+Dans cette partie, on cherche à évaluer à nouveau $p_{0.1}$ , en utilisant la “vraie” densité $\phi_{1.7,5.1}$, par la méthode des trapèzes, avec une étape d’extrapolation de Romberg.
+
+\subsection*{Estimation de $p_{0.1}$}
+
+Estimez la valeur de $p_{0.1}$ avec la méthode de Romberg : Passez en argument de la
+fonction romberg un nombre initial d’intervalles $M = 3$ et un nombre de raffinements
+successifs $n = 12$.
+
+\begin{enumerate}
+\item Nommez \textbf{estRomberg} le vecteur renvoyé par la fonction \textbf{Romberg} avec les paramètres indiqués, et affichez-le.
+\end{enumerate}
+
+\textbf{Reponse}
+
+```{r}
+source('functions_ETC2018.R')
+M = 3
+n = 12
+
+estRomberg = romberg(FUN = densite, n=12, a=0.1, b=0.9, M=3)
+
+plot(estRomberg, type='l')
+```
+
+\begin{enumerate}[resume]
+\item On prendra comme “vraie” valeur de l’intégrale la quantité $p_{0.1,table}$ calculée à la Section 4. Tracez sur le même graphique : le vecteur $0:n$ en abscisses ; et en ordonnées : le logarithme de l’erreur $log | estRomberg - p_{0.1,table} |$ et le logarithme de l’erreur des estimateurs “naïfs” correspondants, c’est à dire les $ log | \hat{I}_m - p_{0.1,table} |$, pour $m = M, 2M, . . . , 2^n M$ . Que constatez-vous ? Comment interprétez-vous le palier ? l’autre portion de la courbe ?
+\end{enumerate}
+
+
+```{r}
+source('functions_ETC2018.R')
+M = 3
+n = 12
+
+x = 0:n
+
+estRomberg = romberg(FUN = densite, n=12, a=0.1, b=0.9, M=3)
+
+naif = c()
+for (p in x) {
+  m = M*2^p
+  res = simpsonInt(FUN=densite, a=0.1, b=0.9, m)
+  naif = c(naif, res)
+}
+
+
+
+plot(x, log(abs(estRomberg-p_table)), type='l')
+lines(x, log(abs(naif - p_table)), col='red')
+
+legend("bottomleft", legend=c("Romberg", 
+                            "naif (Simpson)"),
+       col=c("black", 'red'), lty=1:2, cex=0.8, bg="gray")
+
+```
+
+Méthode de Romberg converge plus vite. L'erreur sur palier est comparable avec .Machine$double.eps.
