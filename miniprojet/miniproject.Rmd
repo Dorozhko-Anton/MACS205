@@ -11,13 +11,18 @@ header-includes:
   - \usepackage{TDheader}
   - \usepackage[colorinlistoftodos]{todonotes}
   - \usepackage{enumitem}
+  - \usepackage{mdframed}
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-\listoftodos
+<!-- \listoftodos -->
+
+\newtheorem*{reponse}{Réponse}
+\surroundwithmdframed[backgroundcolor=green!40]{reponse}
+
 
 \section{Introduction}
 
@@ -86,16 +91,18 @@ $(x_1 , ... , x_n)$, appartenant à $[0, 1]$, retourne le vecteur $(\phi_{1.7,5.
 On utilisera pour cela l’expression (1) et la fonction \textbf{dbeta} de \textbf{R}.
 \end{enumerate}
 
+\begin{reponse}[2.1]
+Le graphe de la fonction \textbf{densite}
+\end{reponse}
+
 ```{r}
-# TODO: to functions_ETC2018.R
-densite = function (x) {
- phi = dbeta(x, shape1 = 1.7, shape2 = 5.1)
- return (phi)
-}
+source('functions_ETC2018.R')
 
 f = densite(seq(0,1,0.001))
 plot(f)
 ```
+
+
 
 On considérera aussi une version approchée de $\phi_{1.7,5.1}$ , basée sur un histogramme construit à partir de $N_w$ échantillons i.i.d $w_i$ de loi $Beta(1.7, 5.1)$. On définit pour tout $x \in [0, 1[$,
 \begin{center}
@@ -108,19 +115,19 @@ où $k(x)$ est la partie entière de $2^8 x$.
 l’infini ? On notera $\hat{\phi}_{1.7,5.1}^{\infty}(x)$ cette limite.
 \end{enumerate}
 
-\textbf{Reponse} 
-
+\begin{reponse}[2.2]
 $\hat{\phi}_{1.7,5.1}^{\infty}(x) = \lim_{N_w \rightarrow \infty} (2^8/N_w) \sum_{i=1}^{N_w} \mathbf{1}_{w_i \in [k(x)2^{-8}, (k(x)+1)2^{-8} [} = 2^8 \int_{k(x)2^{-8}}^{(k(x)+1)2^{-8}} \phi_{1.7,5.1}(t)dt$
+\end{reponse}
+
 
 
 \begin{enumerate}[resume]
 \item Donner une majoration de $\hat{\phi}_{1.7,5.1}^{\infty}(x) - \phi_{1.7,5.1}(x)$ en fonction de $x \in [0, 1[$.
 \end{enumerate}
 
-\textbf{Reponse}
-
+\begin{reponse}[2.3]
 $\hat{\phi}_{1.7,5.1}^{\infty}(x) - \phi_{1.7,5.1}(x) = max(\phi_{1.7,5.1}(k(x)2^{-8}), \phi_{1.7,5.1}((k(x)+1)2^{-8})) - \phi_{1.7,5.1}(x)$
-
+\end{reponse}
 
 
 Pour générer l’histogramme et l’estimateur associé, il vous est fourni un script \textbf{ini.R},
@@ -135,8 +142,10 @@ pas de joindre ce dernier à votre rendu !}
 \item On sera amené dans la suite à utiliser les fonctions implémentées en cours, en leur passant en argument la fonction \textbf{FUN = hist\_value}. Que fait la fonction \textbf{hist\_value} ?
 \end{enumerate}
 
-\textbf{Reponse}
+\begin{reponse}[2.4]
 Elle retourne la valeur de l'histogramme associé au x
+\end{reponse}
+
 
 \section{Interpolation polynomiale}
 
@@ -152,9 +161,10 @@ de l’interpolation et le graphe de la fonction de référence.
   \end{enumerate}
 \end{enumerate}
 
-\textbf{Réponse}
 
-a) Le phénomène de Runge commence à apparaître a partir de degré 60
+\begin{reponse}[3.1.a]
+ Le phénomène de Runge commence à apparaître a partir de degré 60
+\end{reponse}
 
 ```{r, echo=FALSE}
 source('functions_ETC2018.R')
@@ -166,7 +176,9 @@ neval = 1000
 res = interpolLagrange(n=d, a, b, neval=neval,nodes='equi', FUN=densite, Plot=TRUE)
 ```
 
-b) 
+\begin{reponse}[3.1.b]
+\end{reponse}
+
 
 ```{r, echo=FALSE}
 
@@ -189,9 +201,10 @@ res = interpolLagrange(n=61, a, b, neval=neval,nodes='equi', FUN=densite, Plot=T
 commentez.
 \end{enumerate}
 
-\textbf{Reponse}
+\begin{reponse}[3.2.a]
+Le phénomène de Runge commence à apparaître a partir de degré 60
+\end{reponse}
 
-a) Le phénomène de Runge commence à apparaître a partir de degré 60
 
 ```{r, echo=FALSE}
 source('functions_ETC2018.R')
@@ -203,7 +216,9 @@ neval = 1000
 res = interpolLagrange(n=d, a, b, neval=neval,nodes='cheby', FUN=densite, Plot=TRUE)
 ```
 
-b) 
+\begin{reponse}[3.2.b]
+\end{reponse}
+
 
 ```{r, echo=FALSE}
 
@@ -230,6 +245,8 @@ Affichez le résultat de l’interpolation en même temps que la fonction de ré
 pour $M = 20$ et $n = 1, 2, 3$.
 \end{enumerate}
 
+\begin{reponse}[3.1.3]
+\end{reponse}
 ```{r}
 source('functions_ETC2018.R')
 a = space_int
@@ -261,13 +278,15 @@ fonction \textbf{interpolLagrange}.
 \end{enumerate}
 \end{enumerate}
 
-\textbf{Réponse}
-
-a) On a choisi le $n'$ pour avoir presque la même quantité des noeuds. 
+\begin{reponse}[3.1.4]
+a) On a choisi le $n'$ pour avoir la même quantité des noeuds ($3M + 1 = 4M - (M-1)$) 
 
 b) On a choisi neval pour que le nombre des noeuds de l'évaluation sera distribué de la même façon
 
 c) Pour petites valeurs de M l'interpolation de Lagrange 'simple' donne mieux résultats, mais assez vite en augmentent M on va découvrir qu'erreur va exploser à cause du phénomène de Runge.
+\end{reponse}
+
+
 ```{r}
 source('functions_ETC2018.R')
 a = space_int
@@ -283,7 +302,8 @@ for (M in seq(1, 20, 1)) {
   res_piecewise = piecewiseInterpol(n=n,nInt=M,a=a,b=b,
                                     neval=neval, nodes = "equi", 
                                     FUN=densite, Plot=FALSE)
-  errors_piecewise = c(errors_piecewise, max(abs(res_piecewise[1,] - densite(res_piecewise[2,] ))))
+  errors_piecewise = c(errors_piecewise, 
+                       max(abs(res_piecewise[1,] - densite(res_piecewise[2,] ))))
   
   n_simple = 3*M + 1  
   neval_simple = 2^10
@@ -313,10 +333,41 @@ deux premières méthodes (questions 1 et 2) ?
 Quelle méthode d’interpolation vous parait la plus judicieuse ?
 \end{enumerate}
 
-\textbf{Réponse}
+\begin{reponse}[3.2.5]
+3.1.1 a) Le phénomène de Runge commence à apparaître a partir de degré 18
+\end{reponse}
 
-3.1.1
-a) Le phénomène de Runge commence à apparaître a partir de degré 45
+```{r, echo=FALSE}
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+d = 18
+neval = 1000
+
+res = interpolLagrange(n=d, a, b, neval=neval,nodes='equi', FUN=f_hist_value, Plot=TRUE)
+```
+\begin{reponse}[3.2.5]
+3.1.1 b) les trois exemples des différents degrés
+\end{reponse}
+
+```{r, echo=FALSE}
+
+source('functions_ETC2018.R')
+a = space_int
+b = 1 - space_int
+neval = 1000
+
+res = interpolLagrange(n=3, a, b, neval=neval,nodes='equi', FUN=f_hist_value, Plot=TRUE)
+
+res = interpolLagrange(n=10, a, b, neval=neval,nodes='equi', FUN=f_hist_value, Plot=TRUE)
+
+res = interpolLagrange(n=20, a, b, neval=neval,nodes='equi', FUN=f_hist_value, Plot=TRUE)
+
+```
+
+\begin{reponse}[3.2.5]
+3.1.2 a) Le phénomène de Runge commence à apparaître a partir de degré 45
+\end{reponse}
 
 ```{r, echo=FALSE}
 source('functions_ETC2018.R')
@@ -327,37 +378,11 @@ neval = 1000
 
 res = interpolLagrange(n=d, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
 ```
-b) 
 
-```{r, echo=FALSE}
+\begin{reponse}[3.2.5]
+3.1.2 b) les trois exemples des différents degrés
+\end{reponse}
 
-source('functions_ETC2018.R')
-a = space_int
-b = 1 - space_int
-neval = 1000
-
-res = interpolLagrange(n=3, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
-
-res = interpolLagrange(n=20, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
-
-res = interpolLagrange(n=45, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
-
-```
-3.1.2
-
-a) Le phénomène de Runge commence à apparaître a partir de degré 45
-
-```{r, echo=FALSE}
-source('functions_ETC2018.R')
-a = space_int
-b = 1 - space_int
-d = 45
-neval = 1000
-
-res = interpolLagrange(n=d, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
-```
-
-b) 
 
 ```{r, echo=FALSE}
 
@@ -373,7 +398,11 @@ res = interpolLagrange(n=30, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, 
 res = interpolLagrange(n=45, a, b, neval=neval,nodes='cheby', FUN=f_hist_value, Plot=TRUE)
 
 ```
-3.1.3
+
+\begin{reponse}[3.2.5]
+3.1.3 par morceaux avec noeuds equidistants
+\end{reponse}
+
 ```{r}
 source('functions_ETC2018.R')
 a = space_int
@@ -387,9 +416,11 @@ for (n in c(1, 2, 3)) {
 }
 ```
 
+\begin{reponse}[3.2.5 conclusion]
 Dans question 1 et 2 on peut remarquer que le nombre des noeuds à partir lequel on a le phénomène de Runge est moins que pour la fonction \textbf{densite}.
 
 La méthode d'interpolation par morceaux me parait la plus judicieuse, parce qu'il n'y a pas de phénomène de Runge avec le nombre des noeuds plus grands que dans les méthodes précédentes.
+\end{reponse} 
 
 
 \section{Méthodes de quadrature}
@@ -405,7 +436,11 @@ Pour estimer la valeur de $p_{0.1}$ définie par l’équation \eqref{eq:proba},
 \item Affichez le graphe de $\hat{I}^{simp}_M$ en fonction de $M$ , pour $M$ variant sur une plage appropriée. En déduire une première estimation de $p_0.1$. Au vu des résultats numériques, donnez un ordre de grandeur la précision de votre estimation.
 \end{enumerate}
 
-\textbf{Réponse}
+\begin{reponse}[4.1.1]
+Première estimation de $p_{0.1} = 0.8232578$ 
+
+Au vu des résultats numériques, un ordre de grandeur de la précision de mon estimation est $\mathcal{O}(h^4)$
+\end{reponse} 
 
 ```{r}
 source('functions_ETC2018.R')
@@ -424,9 +459,9 @@ for (M in range) {
 plot(range, integrals, type='l')
 ```
 
-Première estimation de $p_{0.1} = 0.8232578$
 
-\todo{donnez un ordre de grandeur la précision de votre estimation.}
+
+
 
 
 \begin{enumerate}[resume]
@@ -446,11 +481,11 @@ déduire et cela est-il en accord avec le cours ?
 \end{enumerate}
 \end{enumerate}
 
-\textbf{Réponse}
-
+\begin{reponse}[4.1.2]
 a) L'ordre de grandeur théorique de l'erreur en fonction de h: $\mathcal{O}(h^4)$
 
 b) 
+\end{reponse} 
 ```{r}
 p_table = pbeta(0.9, 1.7, 5.1) - pbeta(0.1, 1.7, 5.1) 
 
@@ -465,7 +500,9 @@ pente = (logerr[N] - logerr[1])/(log(range[N]) - log(range[1]))
 sprintf("Pente de courbe est: %f", pente)
 ```
 
-c) 
+\begin{reponse}[4.1.2]
+c) Le pente des courbes sont pres de $-4$, parce que on a utilisé le méthode d'ordre 3.
+\end{reponse} 
 ```{r}
 source('functions_ETC2018.R')
 
@@ -488,12 +525,18 @@ pente = (logerr_aposteriori[N] - logerr_aposteriori[1])/(log(range[N]) - log(ran
 sprintf("Pente de courbe est: %f", pente)
 ```
 
-Le pente des courbes sont pres de $-4$, parce que on a utilisé le méthode d'ordre 3.
+
 
 \begin{enumerate}[resume]
 \item On voudrait une méthode automatique pour choisir $M$ en fonction de l’estimation de l’erreur a posteriori, pour avoir une estimation $\hat{I}$ à $10^{-6}$ près de $p_{0.1}$ .
 Écrire un algorithme utilisant la fonction evalErrSimpson.
 \end{enumerate}
+
+\begin{reponse}[4.1.4]
+Donnez maintenant une estimation de $p_{0.1}$ à $10^{-8}$ près.
+
+$p_{0.1} = 0.823258$
+\end{reponse} 
 
 ```{r}
 source('functions_ETC2018.R')
@@ -502,11 +545,6 @@ res = chooseM(FUN=densite, a=0.1, b=0.9, tolerance=10^(-8))
 
 sprintf("Estimation a 10^(-8) pres : %f", res[2, length(res[2,]) - 1])
 ```
-
-
-Donnez maintenant une estimation de $p_{0.1}$ à $10^{-8}$ près.
-
-$p_{0.1} = 0.823258$
 
 
 \subsection{Estimation de $p_{0.1}$ à partir $\hat{\phi}_{1.7,5.1}$}
@@ -533,13 +571,18 @@ $\Delta_M = | \hat{p}^{bruit}_{0.1,M} - \hat{p}_{0.1,M} |.$
 \item Que vous dit la théorie sur l’allure de la courbe de $\Delta_M$ en fonction de $M$?
 \end{enumerate}
 
-\textbf{Réponse}
-
+\begin{reponse}[4.2.1]
 L'erreur va diminuer au certain niveau et après à cause de bruit l'approximation va osciller.
+\end{reponse} 
+
 
 \begin{enumerate}[resume]
 \item Affichez cette courbe et commentez le résultat vis-à-vis de la question précédente.
 \end{enumerate}
+
+\begin{reponse}[4.2.2]
+On observe l'oscillation qui est le bruit.
+\end{reponse} 
 
 ```{r}
 source('functions_ETC2018.R')
@@ -572,7 +615,8 @@ successifs $n = 12$.
 \item Nommez \textbf{estRomberg} le vecteur renvoyé par la fonction \textbf{Romberg} avec les paramètres indiqués, et affichez-le.
 \end{enumerate}
 
-\textbf{Reponse}
+\begin{reponse}[5.1]
+\end{reponse} 
 
 ```{r}
 source('functions_ETC2018.R')
@@ -588,6 +632,11 @@ plot(estRomberg, type='l')
 \item On prendra comme “vraie” valeur de l’intégrale la quantité $p_{0.1,table}$ calculée à la Section 4. Tracez sur le même graphique : le vecteur $0:n$ en abscisses ; et en ordonnées : le logarithme de l’erreur $log | estRomberg - p_{0.1,table} |$ et le logarithme de l’erreur des estimateurs “naïfs” correspondants, c’est à dire les $ log | \hat{I}_m - p_{0.1,table} |$, pour $m = M, 2M, . . . , 2^n M$ . Que constatez-vous ? Comment interprétez-vous le palier ? l’autre portion de la courbe ?
 \end{enumerate}
 
+
+\begin{reponse}[5.2]
+\end{reponse} 
+
+Méthode de Romberg converge plus vite. L'erreur sur palier est comparable avec .Machine$double.eps.
 
 ```{r}
 source('functions_ETC2018.R')
@@ -615,5 +664,3 @@ legend("bottomleft", legend=c("Romberg",
        col=c("black", 'red'), lty=1:2, cex=0.8, bg="gray")
 
 ```
-
-Méthode de Romberg converge plus vite. L'erreur sur palier est comparable avec .Machine$double.eps.
